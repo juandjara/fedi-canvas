@@ -1,11 +1,17 @@
 import { OrthographicView } from '@deck.gl/core/typed'
 import { DeckGL } from '@deck.gl/react/typed'
-import { BitmapLayer, SolidPolygonLayer } from '@deck.gl/layers/typed'
-import GL from '@luma.gl/constants'
-import { useEffect, useMemo, useState } from 'react'
-
-const CANVAS_SIZE = 500
-const TEXTURE_BOUNDS = [0, 0, CANVAS_SIZE, CANVAS_SIZE] as [number, number, number, number]
+import { useMemo, useState } from 'react'
+import { useLoaderData } from '@remix-run/react'
+import ColorPicker from '../ColorPicker'
+import hexToRgb from '@/lib/utils/hexToRgb'
+import isInsideTexture from '@/lib/utils/isInsideTexture'
+import { CANVAS_HEIGHT, CANVAS_WIDTH, TEXTURE_LENGTH } from '@/lib/constants'
+import getColorIndex from '@/lib/utils/getColorIndex'
+import clampToTexture from '@/lib/utils/clampToTexture'
+import { savePixel } from '@/lib/canvas'
+import { getBitmapLayer, type TextureData } from './layers/bitmapLayer'
+import { getCrosshairLayer } from './layers/crosshairLayer'
+import getTooltip from '@/lib/utils/getTooltip'
 
 type ViewState = {
   target: [number, number]
@@ -14,102 +20,55 @@ type ViewState = {
   maxZoom?: number
 }
 
-type TextureData = {
-  width: number
-  height: number
-  data: Uint8ClampedArray
-}
-
 export default function MapContainer() {
-  const [imageData, setImageData] = useState<TextureData | null>(null)
+  const { data } = useLoaderData()
+  const [color, setColor] = useState('#ffffff')
   const [viewState, setViewState] = useState<ViewState>({
-    target: [CANVAS_SIZE / 2, CANVAS_SIZE / 2],
-    zoom: 0, // zoom is relative to pixel size
-    // minZoom: 0,
+    target: [CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2],
+    zoom: 1, // zoom is relative to pixel size
     maxZoom: 5
   })
-  const [color, setColor] = useState('#ffffff')
 
-  useEffect(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = CANVAS_SIZE
-    canvas.height = CANVAS_SIZE
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+  const [imageData, setImageData] = useState<TextureData>(() => {
+    const arr = data
+      .slice(0, TEXTURE_LENGTH) // if canvas is smaller than saved data, cut data to canvas size
+      .concat(
+        TEXTURE_LENGTH > data.length // if canvas is bigger than saved data, fill the gaps with white pixels
+          ? Array.from({ length: TEXTURE_LENGTH - data.length }, () => 255)
+          : []
+      )
 
-    const img = new Image()
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0)
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      setImageData({
-        width: data.width,
-        height: data.height,
-        data: new Uint8ClampedArray(data.data)
-      })
+    return {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      data: new Uint8ClampedArray(arr)
     }
-    img.crossOrigin = "anonymous"
-    img.src = '/texture.png'
-  }, [])
+  })
 
-  function modifyImageData(x: number, y: number, color: string) {
-    const { width, height, data } = imageData!
-    createImageBitmap(new ImageData(data, width, height)).then((imageBitmap) => {
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      ctx.drawImage(imageBitmap, 0, 0)
-      ctx.fillStyle = color
-      ctx.fillRect(x, height - 1 - y, 1, 1)
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      setImageData({
-        width: data.width,
-        height: data.height,
-        data: new Uint8ClampedArray(data.data)
-      })
-    })
+  async function modifyPixel(x: number, y: number, color: string) {
+    const index = getColorIndex(x, y)
+    const [r, g, b] = hexToRgb(color)
+    imageData.data[index] = r
+    imageData.data[index + 1] = g
+    imageData.data[index + 2] = b
+
+    // force redraw of bitmap layer
+    setImageData(d => ({ ...d }))
+
+    // save pixel to database
+    await savePixel(x, y, color)
   }
 
-  const cursor = useMemo(() => {
-    const [x, y] = viewState.target
-    return isInsideTexture([x, y]) ? [Math.floor(x), Math.floor(y)] : null
+  const center = useMemo(() => {
+    return clampToTexture([
+      Math.floor(viewState.target[0]),
+      Math.floor(viewState.target[1])
+    ])
   }, [viewState.target])
 
   const zoomDisplay = useMemo(() => {
     return Math.round(2 ** viewState.zoom * 10) / 10
   }, [viewState.zoom])
-
-  const bitmap = imageData && new BitmapLayer({
-    id: 'bitmap-layer',
-    bounds: TEXTURE_BOUNDS,
-    image: imageData,
-    textureParameters: {
-      [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-      [GL.TEXTURE_MAG_FILTER]: GL.NEAREST
-    },
-    updateTriggers: {
-      image: [imageData]
-    }
-  })
-  const polygon = cursor && new SolidPolygonLayer({
-    id: 'cursor-layer',
-    data: [
-      {
-        polygon: [
-          [0, 0],
-          [0, 1],
-          [1, 1],
-          [1, 0]
-        ].map(([x, y]) => [x + cursor[0], y  + cursor[1]])
-      }
-    ],
-    getPolygon: (d) => d.polygon,
-    getFillColor: hexToRgb(color),
-    getLineColor: [0, 0, 0, 255],
-    stroked: true,
-    filled: true,
-  })
 
   return (
     <div className='overflow-hidden w-full h-screen absolute inset-0 bg-gray-200'>
@@ -117,32 +76,22 @@ export default function MapContainer() {
         viewState={viewState}
         onViewStateChange={({ viewState }) => setViewState(viewState as ViewState)}
         controller={true}
-        layers={[bitmap, polygon]}
+        layers={[
+          getBitmapLayer(imageData),
+          getCrosshairLayer({ center, color })
+        ]}
         views={[
           new OrthographicView({
             flipY: false,
           })
         ]}
-        getTooltip={({ coordinate }) => {
-          if (coordinate && isInsideTexture(coordinate as [number, number])) {
-            const text = `${coordinate[0].toFixed()}, ${coordinate[1].toFixed()}`
-            return {
-              text,
-              style: {
-                margin: '12px',
-                borderRadius: '4px',
-                color: 'white'
-              }
-            }
-          }
-          return null
-        }}
+        getTooltip={getTooltip}
         onClick={({ coordinate }) => {
           if (coordinate && isInsideTexture(coordinate as [number, number])) {
             const [x, y] = coordinate as [number, number]
             setViewState((viewState) => ({
               ...viewState,
-              zoom: 4,
+              zoom: 4.20,
               target: [x, y],
               transitionDuration: 500,
             }))
@@ -151,10 +100,10 @@ export default function MapContainer() {
       />
       <div className='m-4 fixed bottom-0 left-0 flex gap-4 items-end'>
         <div className='bg-white w-28 p-3 shadow-lg rounded-lg'>
-          {cursor && (
+          {center && (
             <>
-              <p className='text-gray-500 text-sm font-medium'>X: {cursor[0]}</p>
-              <p className='text-gray-500 text-sm font-medium'>Y: {cursor[1]}</p>
+              <p className='text-gray-500 text-sm font-medium'>X: {center[0]}</p>
+              <p className='text-gray-500 text-sm font-medium'>Y: {center[1]}</p>
             </>
           )}
           <p className='text-gray-500 text-sm font-medium'>Zoom: {zoomDisplay}x</p>
@@ -162,61 +111,9 @@ export default function MapContainer() {
         <ColorPicker color={color} setColor={setColor} />
         <button
           className='bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold py-2 px-4 rounded-md shadow-lg'
-          onClick={() => {
-            if (cursor) {
-              modifyImageData(cursor[0], cursor[1], color)
-            }
-          }}
+          onClick={() => modifyPixel(center[0], center[1], color)}
         >Place your pixel!</button>
       </div>
-      {/* <div className='hidden'>
-        <canvas ref={canvasRef} id='texture-canvas' width={TEXTURE_BOUNDS[2]} height={TEXTURE_BOUNDS[3]} />
-      </div> */}
     </div>
   ) 
-}
-
-function isInsideTexture([x, y]: [number, number]) {
-  return x >= TEXTURE_BOUNDS[0] && x <= TEXTURE_BOUNDS[2] && y >= TEXTURE_BOUNDS[1] && y <= TEXTURE_BOUNDS[3]
-}
-
-function hexToRgb(hex: string) {
-  const bigint = parseInt(hex.replace('#', ''), 16)
-  const r = (bigint >> 16) & 255
-  const g = (bigint >> 8) & 255
-  const b = bigint & 255
-  return [r, g, b] as [number, number, number]
-}
-
-const COLORS = [
-  '#ff4500',
-  '#ffa800',
-  '#ffd635',
-  '#00a368',
-  '#7eed56',
-  '#2450a4',
-  '#3690ea',
-  '#51e9f4',
-  '#811e9f',
-  '#b44ac0',
-  '#ff99aa',
-  '#9c6926',
-  '#000000',
-  '#898d90',
-  '#ffffff',
-]
-function ColorPicker({ color, setColor }: { color: string; setColor: (color: string) => void }) {
-  return (
-    <div className='p-3 border border-gray-300 bg-gray-100 rounded-md flex flex-wrap items-center gap-2'>
-      {COLORS.map((c) => (
-        <button
-          key={c}
-          aria-label="Color picker button"
-          className={`${c === color ? 'w-10 h-10 shadow-lg' : 'w-8 h-8 shadow-md'} rounded-full border-2 border-white cursor-pointer`}
-          style={{ backgroundColor: c }}
-          onClick={() => setColor(c)}
-        />
-      ))}
-    </div>
-  )
 }
