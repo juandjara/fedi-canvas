@@ -1,5 +1,5 @@
 import MapFallback from "@/components/map/MapFallback"
-import MapTopLeft from "@/components/map/MapTopLeft"
+import MapHeader from "@/components/map/MapHeader"
 import { getCanvas } from "@/lib/canvas"
 import type { LoaderFunction } from "@remix-run/node"
 import { lazy } from "react"
@@ -15,7 +15,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export default function Index() {
   return (
     <div className="flex relative w-full">
-      <MapTopLeft />
+      <MapHeader />
       <ClientOnly fallback={<MapFallback />}>{() => <Map />}</ClientOnly>
     </div>
   )

@@ -98,21 +98,25 @@ export default function MapContainer() {
           }
         }}
       />
-      <div className='m-4 fixed bottom-0 left-0 flex gap-4 items-end'>
-        <div className='bg-white w-28 p-3 shadow-lg rounded-lg'>
-          {center && (
-            <>
-              <p className='text-gray-500 text-sm font-medium'>X: {center[0]}</p>
-              <p className='text-gray-500 text-sm font-medium'>Y: {center[1]}</p>
-            </>
-          )}
-          <p className='text-gray-500 text-sm font-medium'>Zoom: {zoomDisplay}x</p>
+      <div className='m-4 fixed bottom-0 inset-x-0 flex flex-col gap-4 items-center'>
+        <div className='bg-white p-4 shadow-lg rounded-lg'>
+          <div className='flex justify-center gap-2 mb-2'>
+            <p className='text-gray-500 text-sm font-medium'>
+              X: <strong className='text-lg font-semibold'>{center[0]}</strong>
+            </p>
+            <p className='text-gray-500 text-sm font-medium'>
+              Y: <strong className='text-lg font-semibold'>{center[1]}</strong>
+            </p>
+            <p className='text-gray-500 text-sm font-medium'>
+              Z: <strong className='text-lg font-semibold'>{zoomDisplay}x</strong>
+            </p>
+          </div>
+          <button
+            className='bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold py-2 px-4 rounded-md shadow-lg'
+            onClick={() => modifyPixel(center[0], center[1], color)}
+          >Place your pixel!</button>
         </div>
         <ColorPicker color={color} setColor={setColor} />
-        <button
-          className='bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold py-2 px-4 rounded-md shadow-lg'
-          onClick={() => modifyPixel(center[0], center[1], color)}
-        >Place your pixel!</button>
       </div>
     </div>
   ) 

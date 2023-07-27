@@ -17,7 +17,7 @@ const COLORS = [
 ]
 export default function ColorPicker({ color, setColor }: { color: string; setColor: (color: string) => void }) {
   return (
-    <div className='p-3 border border-gray-300 bg-gray-100 rounded-md flex flex-wrap items-center gap-2'>
+    <div className='p-3 border border-gray-300 bg-gray-100 rounded-md flex flex-wrap items-center justify-center gap-2'>
       {COLORS.map((c) => (
         <button
           key={c}
