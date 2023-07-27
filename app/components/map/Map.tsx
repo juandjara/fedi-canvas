@@ -1,4 +1,4 @@
-import { OrthographicView } from '@deck.gl/core/typed'
+import { OrthographicView, type PickingInfo } from '@deck.gl/core/typed'
 import { DeckGL } from '@deck.gl/react/typed'
 import { useMemo, useState } from 'react'
 import { useLoaderData } from '@remix-run/react'
@@ -46,7 +46,7 @@ export default function MapContainer() {
     }
   })
 
-  async function modifyPixel(x: number, y: number, color: string) {
+  function drawPixel(x: number, y: number, color: string) {
     const index = getColorIndex(x, y)
     const [r, g, b] = hexToRgb(color)
     imageData.data[index] = r
@@ -55,9 +55,6 @@ export default function MapContainer() {
 
     // force redraw of bitmap layer
     setImageData(d => ({ ...d }))
-
-    // save pixel to database
-    await savePixel(x, y, color)
   }
 
   const center = useMemo(() => {
@@ -66,6 +63,23 @@ export default function MapContainer() {
       Math.floor(viewState.target[1])
     ])
   }, [viewState.target])
+
+  function onMapClick({ coordinate }: PickingInfo) {
+    if (coordinate && isInsideTexture(coordinate as [number, number])) {
+      const [x, y] = coordinate as [number, number]
+      setViewState((viewState) => ({
+        ...viewState,
+        zoom: 4.20,
+        target: [x, y],
+        transitionDuration: 500,
+      }))
+    }
+  }
+
+  async function onCTAClick() {
+    await savePixel(center[0], center[1], color)
+    drawPixel(center[0], center[1], color)
+  }
 
   return (
     <div className='overflow-hidden w-full h-screen absolute inset-0 bg-gray-200'>
@@ -83,24 +97,14 @@ export default function MapContainer() {
           })
         ]}
         getTooltip={getTooltip}
-        onClick={({ coordinate }) => {
-          if (coordinate && isInsideTexture(coordinate as [number, number])) {
-            const [x, y] = coordinate as [number, number]
-            setViewState((viewState) => ({
-              ...viewState,
-              zoom: 4.20,
-              target: [x, y],
-              transitionDuration: 500,
-            }))
-          }
-        }}
+        onClick={onMapClick}
       />
       <div className='m-4 fixed bottom-0 inset-x-0 flex flex-col gap-4 items-center'>
         <ActionButton
           x={center[0]}
           y={center[1]}
           z={viewState.zoom}
-          onClick={() => modifyPixel(center[0], center[1], color)}
+          onClick={onCTAClick}
         />
         <ColorPicker color={color} setColor={setColor} />
       </div>
