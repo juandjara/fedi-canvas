@@ -12,6 +12,7 @@ import { savePixel } from '@/lib/canvas'
 import { getBitmapLayer, type TextureData } from './layers/bitmapLayer'
 import { getCrosshairLayer } from './layers/crosshairLayer'
 import getTooltip from '@/lib/utils/getTooltip'
+import ActionButton from './ActionButton'
 
 type ViewState = {
   target: [number, number]
@@ -66,10 +67,6 @@ export default function MapContainer() {
     ])
   }, [viewState.target])
 
-  const zoomDisplay = useMemo(() => {
-    return Math.round(2 ** viewState.zoom * 10) / 10
-  }, [viewState.zoom])
-
   return (
     <div className='overflow-hidden w-full h-screen absolute inset-0 bg-gray-200'>
       <DeckGL
@@ -99,23 +96,12 @@ export default function MapContainer() {
         }}
       />
       <div className='m-4 fixed bottom-0 inset-x-0 flex flex-col gap-4 items-center'>
-        <div className='bg-white p-4 shadow-md rounded-lg'>
-          <div className='flex justify-center gap-2 mb-2'>
-            <p className='text-gray-500 text-sm font-medium'>
-              X<strong className='text-lg font-semibold'>{center[0]}</strong>
-            </p>
-            <p className='text-gray-500 text-sm font-medium'>
-              Y<strong className='text-lg font-semibold'>{center[1]}</strong>
-            </p>
-            <p className='text-gray-500 text-sm font-medium'>
-              Z<strong className='text-lg font-semibold'>{zoomDisplay}</strong>
-            </p>
-          </div>
-          <button
-            className='bg-orange-500 hover:bg-orange-600 shadow-orange-500/50 text-white text-lg font-bold py-2 px-4 rounded-md shadow-md'
-            onClick={() => modifyPixel(center[0], center[1], color)}
-          >Place your pixel!</button>
-        </div>
+        <ActionButton
+          x={center[0]}
+          y={center[1]}
+          z={viewState.zoom}
+          onClick={() => modifyPixel(center[0], center[1], color)}
+        />
         <ColorPicker color={color} setColor={setColor} />
       </div>
     </div>
