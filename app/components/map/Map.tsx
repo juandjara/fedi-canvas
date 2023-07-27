@@ -99,20 +99,20 @@ export default function MapContainer() {
         }}
       />
       <div className='m-4 fixed bottom-0 inset-x-0 flex flex-col gap-4 items-center'>
-        <div className='bg-white p-4 shadow-lg rounded-lg'>
+        <div className='bg-white p-4 shadow-md rounded-lg'>
           <div className='flex justify-center gap-2 mb-2'>
             <p className='text-gray-500 text-sm font-medium'>
-              X: <strong className='text-lg font-semibold'>{center[0]}</strong>
+              X<strong className='text-lg font-semibold'>{center[0]}</strong>
             </p>
             <p className='text-gray-500 text-sm font-medium'>
-              Y: <strong className='text-lg font-semibold'>{center[1]}</strong>
+              Y<strong className='text-lg font-semibold'>{center[1]}</strong>
             </p>
             <p className='text-gray-500 text-sm font-medium'>
-              Z: <strong className='text-lg font-semibold'>{zoomDisplay}x</strong>
+              Z<strong className='text-lg font-semibold'>{zoomDisplay}</strong>
             </p>
           </div>
           <button
-            className='bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold py-2 px-4 rounded-md shadow-lg'
+            className='bg-orange-500 hover:bg-orange-600 shadow-orange-500/50 text-white text-lg font-bold py-2 px-4 rounded-md shadow-md'
             onClick={() => modifyPixel(center[0], center[1], color)}
           >Place your pixel!</button>
         </div>
