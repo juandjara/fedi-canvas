@@ -11,5 +11,5 @@ export async function savePixel(x: number, y: number, color: string) {
     headers: {
       'Content-Type': 'application/json'
     }
-  })
+  }).catch(console.error)
 }

@@ -7,8 +7,8 @@ const REDIS_URL = process.env.REDIS_URL
  */
 export async function withRedis<T>(fn: (redis: Redis) => Promise<T>) {
   if (!REDIS_URL) {
-    throw new Error('REDIS_URL not found')
-  }  
+    throw new Error('REDIS_URL not found in process.env')
+  }
   const redis = new Redis(
     REDIS_URL,
     { family: 6, reconnectOnError: () => 1 }

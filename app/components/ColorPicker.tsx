@@ -15,13 +15,31 @@ const COLORS = [
   '#898d90',
   '#ffffff',
 ]
+const LABELS = [
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'lime',
+  'blue',
+  'sky',
+  'cyan',
+  'purple',
+  'magenta',
+  'pink',
+  'brown',
+  'black',
+  'gray',
+  'white',
+]
+
 export default function ColorPicker({ color, setColor }: { color: string; setColor: (color: string) => void }) {
   return (
     <div className='p-3 shadow-md border border-gray-300 bg-gray-100 rounded-md flex flex-wrap items-center justify-center gap-2'>
-      {COLORS.map((c) => (
+      {COLORS.map((c, i) => (
         <button
           key={c}
-          aria-label="Color picker button"
+          aria-label={LABELS[i]}
           className={`${c === color ? 'w-10 h-10 shadow-lg' : 'w-8 h-8 shadow-md'} rounded-full border-2 border-white cursor-pointer`}
           style={{ backgroundColor: c }}
           onClick={() => setColor(c)}
