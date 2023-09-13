@@ -13,10 +13,21 @@ function hydrate() {
   })
 }
 
-if (typeof requestIdleCallback === "function") {
-  requestIdleCallback(hydrate)
+function main() {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(hydrate)
+  } else {
+    // Safari doesn't support requestIdleCallback
+    // https://caniuse.com/requestidlecallback
+    setTimeout(hydrate, 1)
+  }
+}
+
+if(process.env.NODE_ENV === "development") {
+  import('remix-development-tools').then(({ initClient }) => {
+    initClient()
+    main()
+  })
 } else {
-  // Safari doesn't support requestIdleCallback
-  // https://caniuse.com/requestidlecallback
-  setTimeout(hydrate, 1)
+  main()
 }

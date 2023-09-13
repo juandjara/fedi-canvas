@@ -16,11 +16,14 @@ export default function handleRequest(
   const UAIsBot = isbot(request.headers.get("user-agent"))
   const readyEvent = UAIsBot ? 'onAllReady' : 'onShellReady'
  
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let didError = false
+    const context = process.env.NODE_ENV === "development"
+      ? await import("remix-development-tools").then(({ initServer }) => initServer(remixContext))
+      : remixContext
 
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer context={remixContext} url={request.url} />,
+      <RemixServer context={context} url={request.url} />,
       {
         [readyEvent]: () => {
           const body = new PassThrough()

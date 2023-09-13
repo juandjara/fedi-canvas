@@ -11,6 +11,11 @@ import {
 import GlobalSpinner from "./components/GlobalSpiner"
 import tailwind from "./tailwind.css"
 import LiveReload from "./components/LiveReload"
+import { Suspense, lazy } from "react"
+
+const RemixDevTools = process.env.NODE_ENV === 'development'
+  ? lazy(() => import("remix-development-tools"))
+  : null
 
 export function links() {
   return [
@@ -37,6 +42,7 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        {RemixDevTools ? (<Suspense><RemixDevTools /></Suspense>) : null}
       </body>
     </html>
   )
