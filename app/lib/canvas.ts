@@ -1,7 +1,9 @@
+import { TEXTURE_LENGTH } from "./constants"
 import { withRedis } from "./db.server"
 
 export async function getCanvas() {
-  return withRedis(async redis => redis.getBuffer('canvas'))
+  const buffer = await withRedis(async redis => redis.getBuffer('canvas'))
+  return buffer || new Uint8Array(TEXTURE_LENGTH)
 }
 
 export async function savePixel(x: number, y: number, color: string) {
