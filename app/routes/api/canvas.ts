@@ -3,6 +3,8 @@ import { withRedis } from '@/lib/db.server'
 import { type LoaderFunction } from '@remix-run/node'
 import Jimp from 'jimp'
 
+// TODO: add caching
+
 export const loader: LoaderFunction = async () => {
   const dbBuf = await withRedis(async redis => redis.getBuffer('canvas'))
   if (dbBuf) {
