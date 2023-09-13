@@ -13,7 +13,7 @@ export default function CommandBox({ x, y, color, onClose }: {
       </button>
       <p className='mt-3'>
         To place a pixel in the canvas in your selected spot, pick a color and send a message to
-        {' '}<a className="text-orange-500 hover:underline" href="https://mastodon.bot/@fedicanvas">@fedicanvas@mastodon.bot</a> with the following:
+        {' '}<a className="text-orange-500 hover:underline" href="https://botsin.space/@fedicanvas">@fedicanvas@botsin.space</a> with the following:
       </p>
       <p className="text-center mt-3">
         <code className='text-sm bg-gray-100 p-2 rounded-md'>!pixel {x} {y} {color}</code>
