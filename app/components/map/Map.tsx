@@ -1,7 +1,7 @@
 import { OrthographicView, type PickingInfo } from '@deck.gl/core/typed'
 import { DeckGL } from '@deck.gl/react/typed'
-import { useMemo, useState } from 'react'
-import { useLoaderData } from '@remix-run/react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLoaderData, useRevalidator } from '@remix-run/react'
 import ColorPicker from '../ColorPicker'
 import isInsideTexture from '@/lib/utils/isInsideTexture'
 import { CANVAS_HEIGHT, CANVAS_WIDTH, TEXTURE_LENGTH } from '@/lib/constants'
@@ -29,6 +29,19 @@ export default function MapContainer() {
     maxZoom: 5,
     minZoom: -1
   })
+
+  const revalidator = useRevalidator()
+
+  // Revalidate loader data every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document?.visibilityState === 'visible' && revalidator.state === 'idle') {
+        revalidator.revalidate()
+      }
+    }, 5 * 1000)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const imageData = useMemo<TextureData>(() => {
     const arr = data
