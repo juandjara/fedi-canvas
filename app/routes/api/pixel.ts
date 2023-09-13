@@ -5,6 +5,18 @@ import type { ActionFunction } from "@remix-run/node"
 
 export const action: ActionFunction = async ({ request }) => {
   const { x, y, color } = await request.json()
+  if (typeof x !== 'number') {
+    return new Response('Invalid input. x in json body should be a number', { status: 400 })
+  }
+  if (typeof y !== 'number') {
+    return new Response('Invalid input. y in json body should be a number', { status: 400 })
+  }
+  if (typeof color !== 'string') {
+    return new Response('Invalid input. color in json body should be a string', { status: 400 })
+  }
+
+  // TODO: validate user
+
   return withRedis(async redis => {
     const index = getColorIndex(x, y)
     const [r, g, b] = hexToRgb(color)
