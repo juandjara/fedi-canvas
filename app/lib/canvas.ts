@@ -3,7 +3,7 @@ import { withRedis } from "./db.server"
 
 export async function getCanvas() {
   const buffer = await withRedis(async redis => redis.getBuffer('canvas'))
-  return buffer || Buffer.alloc(TEXTURE_LENGTH)
+  return buffer || Buffer.alloc(TEXTURE_LENGTH, 0xff)
 }
 
 export async function savePixel(x: number, y: number, color: string) {
