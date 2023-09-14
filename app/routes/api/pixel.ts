@@ -37,10 +37,11 @@ export const action: ActionFunction = async ({ request }) => {
     })
     const user = payload.sub
     return withRedis(async redis => {
-      const lastTime = await redis.get(`time:${user}`)
+      const lastTimeText = await redis.get(`time:${user}`)
+      const lastTime = Number(lastTimeText)
       if (lastTime) {
         const now = Date.now()
-        const diff = now - Number(lastTime)
+        const diff = now - lastTime
         if (diff < WAIT_TIME) {
           return new Response(
             JSON.stringify({
