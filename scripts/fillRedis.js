@@ -1,6 +1,6 @@
 const { Redis } = require('ioredis')
- 
-const REDIS_URL = 'redis://default:b57575be14ee44dda7bf8c024091775e@eu1-arriving-moccasin-38461.upstash.io:38461'
+
+const REDIS_URL = process.env.REDIS_URL
 const redis = new Redis(
   REDIS_URL,
   { family: 6 }
