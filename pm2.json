@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "name": "fedi-canvas",
+      "script": "npm",
+      "args": "start",
+      "env": {
+	"PORT": 3500,
+        "REDIS_URL": "127.0.0.1:6379",
+        "JWT_SECRET": "fedi-canvas-very-long-and-secure-secret-key!!suchs3cur1t1",
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}
